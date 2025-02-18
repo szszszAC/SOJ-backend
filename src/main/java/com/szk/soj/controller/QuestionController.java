@@ -2,6 +2,7 @@ package com.szk.soj.controller;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.gson.Gson;
 import com.szk.soj.annotation.AuthCheck;
 import com.szk.soj.common.BaseResponse;
 import com.szk.soj.common.DeleteRequest;
@@ -10,10 +11,7 @@ import com.szk.soj.common.ResultUtils;
 import com.szk.soj.constant.UserConstant;
 import com.szk.soj.exception.BusinessException;
 import com.szk.soj.exception.ThrowUtils;
-import com.szk.soj.model.dto.question.QuestionAddRequest;
-import com.szk.soj.model.dto.question.QuestionEditRequest;
-import com.szk.soj.model.dto.question.QuestionQueryRequest;
-import com.szk.soj.model.dto.question.QuestionUpdateRequest;
+import com.szk.soj.model.dto.question.*;
 import com.szk.soj.model.entity.Question;
 import com.szk.soj.model.entity.User;
 import com.szk.soj.model.vo.QuestionVO;
@@ -44,6 +42,9 @@ public class QuestionController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private Gson gson;
+
     // region 增删改查
 
     /**
@@ -64,6 +65,15 @@ public class QuestionController {
         if (tags != null) {
             question.setTags(JSONUtil.toJsonStr(tags));
         }
+        List<JudgeCase> judgeCase = questionAddRequest.getJudgeCase();
+        if(judgeCase != null){
+            question.setJudgeCase(gson.toJson(judgeCase));
+        }
+        JudgeConfig judgeConfig = questionAddRequest.getJudgeConfig();
+        if(judgeConfig != null){
+            question.setJudgeConfig(gson.toJson(judgeConfig));
+        }
+
         questionService.validQuestion(question, true);
         User loginUser = userService.getLoginUser(request);
         question.setUserId(loginUser.getId());
@@ -118,6 +128,14 @@ public class QuestionController {
         if (tags != null) {
             question.setTags(JSONUtil.toJsonStr(tags));
         }
+        List<JudgeCase> judgeCase = questionUpdateRequest.getJudgeCase();
+        if(judgeCase != null){
+            question.setJudgeCase(gson.toJson(judgeCase));
+        }
+        JudgeConfig judgeConfig = questionUpdateRequest.getJudgeConfig();
+        if(judgeConfig != null){
+            question.setJudgeConfig(gson.toJson(judgeConfig));
+        }
         // 参数校验
         questionService.validQuestion(question, false);
         long id = questionUpdateRequest.getId();
@@ -144,6 +162,22 @@ public class QuestionController {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         return ResultUtils.success(questionService.getQuestionVO(question, request));
+    }
+
+    @GetMapping("/get")
+    public BaseResponse<Question> getQuestionById(long id, HttpServletRequest request) {
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Question question = questionService.getById(id);
+        if (question == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        if(!question.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)){
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        return ResultUtils.success(question);
     }
 
     /**
@@ -228,6 +262,15 @@ public class QuestionController {
         // 参数校验
         questionService.validQuestion(question, false);
         User loginUser = userService.getLoginUser(request);
+        List<JudgeCase> judgeCase = questionEditRequest.getJudgeCase();
+        if(judgeCase != null){
+            question.setJudgeCase(gson.toJson(judgeCase));
+        }
+        JudgeConfig judgeConfig = questionEditRequest.getJudgeConfig();
+        if(judgeConfig != null){
+            question.setJudgeConfig(gson.toJson(judgeConfig));
+        }
+
         long id = questionEditRequest.getId();
         // 判断是否存在
         Question oldQuestion = questionService.getById(id);

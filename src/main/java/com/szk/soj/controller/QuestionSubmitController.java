@@ -1,10 +1,18 @@
 package com.szk.soj.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.szk.soj.annotation.AuthCheck;
 import com.szk.soj.common.BaseResponse;
 import com.szk.soj.common.ErrorCode;
 import com.szk.soj.common.ResultUtils;
+import com.szk.soj.constant.UserConstant;
 import com.szk.soj.exception.BusinessException;
+import com.szk.soj.model.dto.question.QuestionQueryRequest;
+import com.szk.soj.model.dto.questionsubmit.QuestionSubmitQueryRequest;
+import com.szk.soj.model.entity.Question;
+import com.szk.soj.model.entity.QuestionSubmit;
 import com.szk.soj.model.entity.User;
+import com.szk.soj.model.vo.QuestionSubmitVO;
 import com.szk.soj.service.QuestionSubmitService;
 import com.szk.soj.model.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.szk.soj.service.UserService;
@@ -43,7 +51,7 @@ public class QuestionSubmitController {
      */
     @PostMapping("/")
     public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
-            HttpServletRequest request) {
+                                               HttpServletRequest request) {
         if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -52,6 +60,23 @@ public class QuestionSubmitController {
         long questionId = questionSubmitAddRequest.getQuestionId();
         Long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(questionSubmitId);
+    }
+
+    /**
+     * 分页获取题目提交列表（除了管理员外，普通用户只能看到非答案，提交代码等公开信息）
+     *
+     * @param questionSubmitQueryRequest
+     * @return
+     */
+    @PostMapping("/list/page")
+    public BaseResponse<Page<QuestionSubmitVO>> listQuestionSubmitByPage(@RequestBody QuestionSubmitQueryRequest questionSubmitQueryRequest,
+                                                                         HttpServletRequest request) {
+        long current = questionSubmitQueryRequest.getCurrent();
+        long size = questionSubmitQueryRequest.getPageSize();
+        final User loginUser = userService.getLoginUser(request);
+        Page<QuestionSubmit> questionSubmitPage = questionSubmitService.page(new Page<>(current, size),
+                questionSubmitService.getQueryWrapper(questionSubmitQueryRequest));
+        return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionSubmitPage, loginUser));
     }
 
 }
