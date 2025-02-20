@@ -41,7 +41,6 @@ public class QuestionController {
 
     @Resource
     private UserService userService;
-
     @Resource
     private Gson gson;
 
@@ -66,14 +65,13 @@ public class QuestionController {
             question.setTags(JSONUtil.toJsonStr(tags));
         }
         List<JudgeCase> judgeCase = questionAddRequest.getJudgeCase();
-        if(judgeCase != null){
+        if (judgeCase != null) {
             question.setJudgeCase(gson.toJson(judgeCase));
         }
         JudgeConfig judgeConfig = questionAddRequest.getJudgeConfig();
-        if(judgeConfig != null){
+        if (judgeConfig != null) {
             question.setJudgeConfig(gson.toJson(judgeConfig));
         }
-
         questionService.validQuestion(question, true);
         User loginUser = userService.getLoginUser(request);
         question.setUserId(loginUser.getId());
@@ -129,11 +127,11 @@ public class QuestionController {
             question.setTags(JSONUtil.toJsonStr(tags));
         }
         List<JudgeCase> judgeCase = questionUpdateRequest.getJudgeCase();
-        if(judgeCase != null){
+        if (judgeCase != null) {
             question.setJudgeCase(gson.toJson(judgeCase));
         }
         JudgeConfig judgeConfig = questionUpdateRequest.getJudgeConfig();
-        if(judgeConfig != null){
+        if (judgeConfig != null) {
             question.setJudgeConfig(gson.toJson(judgeConfig));
         }
         // 参数校验
@@ -147,7 +145,7 @@ public class QuestionController {
     }
 
     /**
-     * 根据 id 获取
+     * 根据 id 获取（包装类）
      *
      * @param id
      * @return
@@ -164,6 +162,12 @@ public class QuestionController {
         return ResultUtils.success(questionService.getQuestionVO(question, request));
     }
 
+    /**
+     * 根据 id 获取
+     *
+     * @param id
+     * @return
+     */
     @GetMapping("/get")
     public BaseResponse<Question> getQuestionById(long id, HttpServletRequest request) {
         if (id <= 0) {
@@ -173,8 +177,9 @@ public class QuestionController {
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
+        //不是本人或者管理员不能获取所有数据
         User loginUser = userService.getLoginUser(request);
-        if(!question.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)){
+        if (!question.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         return ResultUtils.success(question);
@@ -188,7 +193,7 @@ public class QuestionController {
      */
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest) {
+    public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest, HttpServletRequest request) {
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
         Page<Question> questionPage = questionService.page(new Page<>(current, size),
@@ -205,7 +210,7 @@ public class QuestionController {
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-            HttpServletRequest request) {
+                                                               HttpServletRequest request) {
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
         // 限制爬虫
@@ -224,7 +229,7 @@ public class QuestionController {
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listMyQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-            HttpServletRequest request) {
+                                                                 HttpServletRequest request) {
         if (questionQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -259,18 +264,17 @@ public class QuestionController {
         if (tags != null) {
             question.setTags(JSONUtil.toJsonStr(tags));
         }
-        // 参数校验
-        questionService.validQuestion(question, false);
-        User loginUser = userService.getLoginUser(request);
         List<JudgeCase> judgeCase = questionEditRequest.getJudgeCase();
-        if(judgeCase != null){
+        if (judgeCase != null) {
             question.setJudgeCase(gson.toJson(judgeCase));
         }
         JudgeConfig judgeConfig = questionEditRequest.getJudgeConfig();
-        if(judgeConfig != null){
+        if (judgeConfig != null) {
             question.setJudgeConfig(gson.toJson(judgeConfig));
         }
-
+        // 参数校验
+        questionService.validQuestion(question, false);
+        User loginUser = userService.getLoginUser(request);
         long id = questionEditRequest.getId();
         // 判断是否存在
         Question oldQuestion = questionService.getById(id);
