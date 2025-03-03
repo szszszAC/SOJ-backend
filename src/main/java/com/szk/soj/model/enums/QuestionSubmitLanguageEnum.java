@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 /**
  * 上传代码语言枚举
  *
- * @author <a href="https://github.com/liszk">程序员鱼皮</a>
+ * @author szk
  * @from <a href="https://szk.icu">编程导航知识星球</a>
  */
 public enum QuestionSubmitLanguageEnum {

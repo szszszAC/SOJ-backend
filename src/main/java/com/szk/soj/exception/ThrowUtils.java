@@ -5,7 +5,7 @@ import com.szk.soj.common.ErrorCode;
 /**
  * 抛异常工具类
  *
- * @author <a href="https://github.com/liszk">程序员鱼皮</a>
+ * @author szk
  * @from <a href="https://szk.icu">编程导航知识星球</a>
  */
 public class ThrowUtils {
